@@ -7,4 +7,5 @@ scikit-learn>=1.0.0
 spacy>=3.5.0
 reportlab>=3.6.12
 pytest>=7.0.0
-python-dotenv>=1.0.0
+python-dotenv>
+gunicorn>=21.2.0
