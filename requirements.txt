@@ -1,0 +1,10 @@
+Flask>=2.3.0
+Flask-SQLAlchemy>=3.0.0
+python-docx>=0.8.11
+pypdf>=3.9.0
+dateparser>=1.1.8
+scikit-learn>=1.0.0
+spacy>=3.5.0
+reportlab>=3.6.12
+pytest>=7.0.0
+python-dotenv>=1.0.0

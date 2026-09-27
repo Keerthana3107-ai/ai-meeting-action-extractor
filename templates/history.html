@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+
+{% block title %}Meeting History | {{ app_full_name }}{% endblock %}
+{% block header_title %}Meeting Archives & History{% endblock %}
+
+{% block header_actions %}
+<div class="btn-group">
+  <div class="dropdown">
+    <button type="button" class="btn btn-secondary btn-sm dropdown-toggle" id="export-all-dropdown">
+      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+      <span>Export All</span>
+      <span>▾</span>
+    </button>
+    <div class="dropdown-menu">
+      <a href="{{ url_for('api.api_export_all_csv') }}" class="dropdown-item">
+        <span>📊</span> All Tasks (CSV)
+      </a>
+      <a href="{{ url_for('api.api_export_all_json') }}" class="dropdown-item">
+        <span>📄</span> All Meetings & Tasks (JSON)
+      </a>
+    </div>
+  </div>
+
+  <a href="{{ url_for('main.extract_page') }}" class="btn btn-primary btn-sm">
+    <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+    <span>New Extraction</span>
+  </a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="card" style="margin-bottom: 1.5rem;">
+  <div class="card-body" style="padding: 1.25rem 1.5rem;">
+    <form method="GET" action="{{ url_for('main.history') }}" style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: center; justify-content: space-between;">
+      <div style="flex: 1; min-width: 260px;">
+        <input type="text" name="q" value="{{ search_query }}" class="form-input" placeholder="Search by title, transcript keyword, or filename..." style="padding: 0.65rem 1rem;">
+      </div>
+
+      <div style="display: flex; gap: 0.75rem; align-items: center;">
+        <select name="sort" class="form-select" style="width: 170px;" onchange="this.form.submit()">
+          <option value="newest" {% if sort_by == 'newest' %}selected{% endif %}>Sort: Newest First</option>
+          <option value="oldest" {% if sort_by == 'oldest' %}selected{% endif %}>Sort: Oldest First</option>
+          <option value="title" {% if sort_by == 'title' %}selected{% endif %}>Sort: Meeting Title</option>
+        </select>
+
+        <button type="submit" class="btn btn-secondary">Filter</button>
+        {% if search_query or sort_by != 'newest' %}
+          <a href="{{ url_for('main.history') }}" class="btn btn-outline">Clear</a>
+        {% endif %}
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <div class="card-title">
+      <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+      <span>Archived Meetings ({{ total_meetings }})</span>
+    </div>
+  </div>
+
+  <div class="card-body" style="padding: 0;">
+    {% if meetings %}
+      <div class="table-responsive">
+        <table class="custom-table" id="history-meetings-table">
+          <thead>
+            <tr>
+              <th>Meeting</th>
+              <th>Date</th>
+              <th>Source</th>
+              <th>Total Tasks</th>
+              <th>Completed</th>
+              <th>Overdue</th>
+              <th>Progress</th>
+              <th style="text-align: right;">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for m in meetings %}
+              {% set total = m.action_items|length %}
+              {% set completed = m.action_items|selectattr('status', 'equalto', 'Completed')|list|length %}
+              {% set overdue = m.action_items|selectattr('is_overdue', 'equalto', True)|list|length %}
+              {% set pct = (completed / total * 100)|round|int if total > 0 else 0 %}
+              <tr>
+                <td>
+                  <a href="{{ url_for('meetings.view_meeting', meeting_id=m.id) }}" style="font-weight: 700; color: #818cf8; font-size: 0.95rem;">
+                    {{ m.title }}
+                  </a>
+                  <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 2px;">
+                    {{ m.transcript[:100] }}...
+                  </div>
+                </td>
+                <td style="font-size: 0.85rem; color: var(--text-secondary); white-space: nowrap;">
+                  {{ m.meeting_date|format_date }}
+                </td>
+                <td style="font-size: 0.85rem; color: var(--text-muted); white-space: nowrap;">
+                  {{ m.file_name }}
+                </td>
+                <td>
+                  <span class="badge" style="background: var(--bg-surface-hover); color: var(--text-main);">
+                    {{ total }}
+                  </span>
+                </td>
+                <td>
+                  <span class="badge badge-completed">
+                    {{ completed }}
+                  </span>
+                </td>
+                <td>
+                  {% if overdue > 0 %}
+                    <span class="badge badge-overdue">{{ overdue }}</span>
+                  {% else %}
+                    <span style="color: var(--text-muted); font-size: 0.85rem;">0</span>
+                  {% endif %}
+                </td>
+                <td style="min-width: 130px;">
+                  <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <div class="progress-track" style="flex: 1;">
+                      <div class="progress-bar" style="width: {{ pct }}%;"></div>
+                    </div>
+                    <span style="font-size: 0.78rem; font-weight: 600; color: var(--text-secondary);">{{ pct }}%</span>
+                  </div>
+                </td>
+                <td style="text-align: right;">
+                  <div class="table-actions" style="justify-content: flex-end;">
+                    <a href="{{ url_for('meetings.view_meeting', meeting_id=m.id) }}" class="btn btn-outline btn-sm">
+                      View
+                    </a>
+
+                    <div class="dropdown">
+                      <button type="button" class="btn btn-secondary btn-sm dropdown-toggle">
+                        Export ▾
+                      </button>
+                      <div class="dropdown-menu">
+                        <a href="{{ url_for('meetings.export_meeting_csv', meeting_id=m.id) }}" class="dropdown-item">CSV</a>
+                        <a href="{{ url_for('meetings.export_meeting_json', meeting_id=m.id) }}" class="dropdown-item">JSON</a>
+                        <a href="{{ url_for('meetings.export_meeting_pdf', meeting_id=m.id) }}" class="dropdown-item">PDF Report</a>
+                      </div>
+                    </div>
+
+                    <form method="POST" action="{{ url_for('meetings.delete_meeting', meeting_id=m.id) }}" onsubmit="return confirm('Permanently delete this meeting?');" style="display: inline;">
+                      <button type="submit" class="action-icon-btn delete-btn" title="Delete meeting">
+                        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                      </button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div style="padding: 3rem; text-align: center; color: var(--text-muted);">
+        <p style="margin-bottom: 1rem;">No meeting transcripts found matching your criteria.</p>
+        <a href="{{ url_for('meetings.load_sample_demo') }}" class="btn btn-primary btn-sm">Load Sample Demo Meeting</a>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

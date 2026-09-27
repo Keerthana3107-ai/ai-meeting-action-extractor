@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+env/
+.env
+
+# SQLite database
+instance/
+*.db
+*.sqlite3
+
+# Uploads and temporary exports
+uploads/*
+!uploads/.gitkeep
+exports/*
+!exports/.gitkeep
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.log

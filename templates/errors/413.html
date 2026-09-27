@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block title %}413 - File Too Large | {{ app_full_name }}{% endblock %}
+{% block header_title %}File Too Large{% endblock %}
+
+{% block content %}
+<div class="card" style="text-align: center; padding: 4rem 2rem; max-width: 600px; margin: 2rem auto;">
+  <div style="font-size: 4rem; font-weight: 800; color: var(--amber); margin-bottom: 1rem;">413</div>
+  <h2 style="font-size: 1.5rem; color: var(--text-main); margin-bottom: 0.75rem;">Payload Too Large</h2>
+  <p style="color: var(--text-muted); margin-bottom: 2rem;">The uploaded transcript file exceeds the maximum allowable limit of 16MB. Please upload a smaller file or paste text directly.</p>
+  <a href="{{ url_for('main.extract_page') }}" class="btn btn-primary" style="display: inline-flex; justify-content: center;">
+    Try Again
+  </a>
+</div>
+{% endblock %}

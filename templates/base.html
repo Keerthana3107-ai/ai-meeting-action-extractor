@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}{{ app_full_name }}{% endblock %}</title>
+  <meta name="description" content="AI Meeting Action-Item Extractor - Automatically detect tasks, owners, deadlines, and duplicate action items from meeting transcripts.">
+  
+  <!-- Modern Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+  <!-- Core Stylesheet -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+  <div class="app-wrapper">
+    <!-- Sidebar Navigation -->
+    <aside class="app-sidebar" id="sidebar">
+      <div class="sidebar-brand">
+        <div class="brand-icon">
+          <span>⚡</span>
+        </div>
+        <div class="brand-text">
+          <h1>{{ app_name }}</h1>
+          <span class="brand-badge">NLP ENGINE</span>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <a href="{{ url_for('main.dashboard') }}" class="nav-link {% if request.endpoint == 'main.dashboard' %}active{% endif %}" id="nav-dashboard">
+          <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+          <span>Dashboard</span>
+        </a>
+
+        <a href="{{ url_for('main.extract_page') }}" class="nav-link {% if request.endpoint == 'main.extract_page' %}active{% endif %}" id="nav-extract">
+          <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+          <span>Extract Items</span>
+        </a>
+
+        <a href="{{ url_for('main.history') }}" class="nav-link {% if request.endpoint == 'main.history' or (request.endpoint and 'meetings.view_meeting' in request.endpoint) %}active{% endif %}" id="nav-history">
+          <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <span>Meeting History</span>
+        </a>
+
+        <a href="{{ url_for('main.analytics') }}" class="nav-link {% if request.endpoint == 'main.analytics' %}active{% endif %}" id="nav-analytics">
+          <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+          <span>Analytics</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <a href="{{ url_for('meetings.load_sample_demo') }}" class="quick-demo-btn" id="sidebar-sample-demo-btn">
+          <span>✨</span>
+          <span>Load Sample Demo</span>
+        </a>
+        <div class="footer-text">
+          <p>© {{ current_year }} {{ app_name }}</p>
+          <p style="font-size: 0.7rem; opacity: 0.7;">Dynamic NLP Task Miner</p>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Viewport -->
+    <div class="app-main">
+      <!-- Top Navbar -->
+      <header class="top-navbar">
+        <div class="page-title">
+          <h2>{% block header_title %}Overview{% endblock %}</h2>
+        </div>
+        <div class="top-actions">
+          {% block header_actions %}
+          <a href="{{ url_for('main.extract_page') }}" class="btn btn-primary btn-sm" id="top-btn-new-extract">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+            <span>New Extraction</span>
+          </a>
+          {% endblock %}
+        </div>
+      </header>
+
+      <!-- Main Content Container -->
+      <main class="main-content">
+        <!-- Flash Alerts -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <div class="flash-messages" id="flash-container">
+              {% for category, message in messages %}
+                <div class="alert alert-{{ category if category != 'message' else 'info' }}">
+                  <span>{{ message }}</span>
+                  <button type="button" class="alert-close" onclick="this.parentElement.remove()">&times;</button>
+                </div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+      </main>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+  {% block extra_scripts %}{% endblock %}
+</body>
+</html>

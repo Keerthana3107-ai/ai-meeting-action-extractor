@@ -1,0 +1,286 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard | {{ app_full_name }}{% endblock %}
+{% block header_title %}Executive Dashboard{% endblock %}
+
+{% block content %}
+<!-- Metric Stat Cards -->
+<section class="metrics-grid">
+  <div class="metric-card" id="card-total-meetings">
+    <div class="metric-header">
+      <span class="metric-title">Meetings Processed</span>
+      <div class="metric-icon icon-blue">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+      </div>
+    </div>
+    <div class="metric-value">{{ total_meetings }}</div>
+    <div class="metric-sub">Archived transcripts</div>
+  </div>
+
+  <div class="metric-card" id="card-total-items">
+    <div class="metric-header">
+      <span class="metric-title">Action Items</span>
+      <div class="metric-icon icon-purple">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+      </div>
+    </div>
+    <div class="metric-value">{{ total_items }}</div>
+    <div class="metric-sub">NLP extracted tasks</div>
+  </div>
+
+  <div class="metric-card" id="card-completed-items">
+    <div class="metric-header">
+      <span class="metric-title">Completed Tasks</span>
+      <div class="metric-icon icon-emerald">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+      </div>
+    </div>
+    <div class="metric-value">{{ completed_count }}</div>
+    <div class="metric-sub">{{ completion_rate }}% resolution rate</div>
+  </div>
+
+  <div class="metric-card" id="card-pending-items">
+    <div class="metric-header">
+      <span class="metric-title">Pending Action Items</span>
+      <div class="metric-icon icon-amber">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      </div>
+    </div>
+    <div class="metric-value">{{ pending_count }}</div>
+    <div class="metric-sub">In progress or queued</div>
+  </div>
+
+  <div class="metric-card" id="card-overdue-items">
+    <div class="metric-header">
+      <span class="metric-title">Overdue Items</span>
+      <div class="metric-icon icon-rose">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+      </div>
+    </div>
+    <div class="metric-value" style="color: var(--rose);">{{ overdue_count }}</div>
+    <div class="metric-sub">Past target deadline</div>
+  </div>
+
+  <div class="metric-card" id="card-avg-confidence">
+    <div class="metric-header">
+      <span class="metric-title">Model Confidence</span>
+      <div class="metric-icon icon-blue">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+      </div>
+    </div>
+    <div class="metric-value">{{ avg_confidence }}%</div>
+    <div class="metric-sub">Average extraction certainty</div>
+  </div>
+</section>
+
+<!-- Quality & Validation Alerts Row -->
+<div class="card" style="margin-bottom: 2rem;">
+  <div class="card-header">
+    <div class="card-title">
+      <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+      <span>Extraction Quality & Audit Flags</span>
+    </div>
+    <span style="font-size: 0.8rem; color: var(--text-muted);">Real-time rule & NER diagnostics</span>
+  </div>
+  <div class="card-body" style="padding: 1.25rem 1.5rem;">
+    <div style="display: flex; gap: 1.5rem; flex-wrap: wrap; align-items: center;">
+      <div style="display: flex; align-items: center; gap: 0.75rem;">
+        <span class="flag-chip flag-danger" style="font-size: 0.85rem; padding: 4px 10px;">{{ unassigned_count }} Unassigned</span>
+        <span style="font-size: 0.85rem; color: var(--text-secondary);">Items missing an explicit assignee</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 0.75rem;">
+        <span class="flag-chip flag-warning" style="font-size: 0.85rem; padding: 4px 10px;">{{ missing_deadlines_count }} No Deadline</span>
+        <span style="font-size: 0.85rem; color: var(--text-secondary);">Items without parsed date or timeframe</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 0.75rem;">
+        <span class="flag-chip flag-duplicate" style="font-size: 0.85rem; padding: 4px 10px;">{{ duplicate_count }} Duplicates</span>
+        <span style="font-size: 0.85rem; color: var(--text-secondary);">TF-IDF cosine similarity duplicates flagged</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
+  <!-- Urgent Action Items Card -->
+  <div class="card" style="margin-bottom: 0;">
+    <div class="card-header">
+      <div class="card-title">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+        <span>Urgent & High-Priority Tasks</span>
+      </div>
+      <span style="font-size: 0.8rem; color: var(--text-muted);">Top 6 Pending / Overdue</span>
+    </div>
+    <div class="card-body" style="padding: 0;">
+      {% if urgent_items %}
+        <div class="table-responsive">
+          <table class="custom-table">
+            <thead>
+              <tr>
+                <th style="width: 40px;"></th>
+                <th>Task</th>
+                <th>Owner</th>
+                <th>Deadline</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for item in urgent_items %}
+              <tr class="item-row {% if item.status == 'Completed' %}item-completed{% endif %}" data-status="{{ item.current_status|lower }}">
+                <td>
+                  <form method="POST" action="{{ url_for('action_items.toggle_status', item_id=item.id) }}" class="status-toggle-form">
+                    <input type="checkbox" class="status-toggle" {% if item.status == 'Completed' %}checked{% endif %} title="Toggle complete">
+                  </form>
+                </td>
+                <td>
+                  <div class="task-content">
+                    <span class="task-text">{{ item.task }}</span>
+                    {% if item.meeting %}
+                      <span style="font-size: 0.75rem; color: var(--text-muted);">From: {{ item.meeting.title }}</span>
+                    {% endif %}
+                  </div>
+                </td>
+                <td>
+                  <span class="owner-badge {% if item.owner == 'Unassigned' %}owner-unassigned{% endif %}">
+                    <span class="owner-avatar">{{ item.owner[:1]|upper }}</span>
+                    {{ item.owner }}
+                  </span>
+                </td>
+                <td style="font-size: 0.85rem;">
+                  {{ item.deadline }}
+                </td>
+                <td class="status-badge-cell">
+                  <span class="badge {{ item.current_status|status_badge }}">{{ item.current_status }}</span>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div style="padding: 2.5rem; text-align: center; color: var(--text-muted);">
+          <p>No urgent action items. You're all caught up!</p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Quick Extraction Studio Launcher -->
+  <div class="card" style="margin-bottom: 0; display: flex; flex-direction: column;">
+    <div class="card-header">
+      <div class="card-title">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+        <span>Instant Action-Item Extraction</span>
+      </div>
+    </div>
+    <div class="card-body" style="display: flex; flex-direction: column; justify-content: space-between; flex: 1;">
+      <p style="color: var(--text-secondary); margin-bottom: 1.5rem; font-size: 0.92rem; line-height: 1.6;">
+        Upload a transcript document (<code style="color: #a5b4fc;">.txt</code>, <code style="color: #a5b4fc;">.pdf</code>, <code style="color: #a5b4fc;">.docx</code>) or paste raw text from Zoom, Google Meet, or Microsoft Teams to extract actionable tasks in seconds.
+      </p>
+
+      <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1rem;">
+        <a href="{{ url_for('main.extract_page') }}" class="btn btn-primary" style="width: 100%; justify-content: center; padding: 0.85rem;" id="dashboard-extract-studio-btn">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+          <span>Open Extraction Studio</span>
+        </a>
+
+        <a href="{{ url_for('meetings.load_sample_demo') }}" class="btn btn-secondary" style="width: 100%; justify-content: center;" id="dashboard-sample-demo-btn">
+          <span>✨</span>
+          <span>Load Sprint Planning Demo</span>
+        </a>
+      </div>
+
+      <div style="font-size: 0.8rem; color: var(--text-muted); background: var(--bg-secondary); padding: 0.75rem 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">
+        <strong>Features:</strong> Multi-pattern action verb matching, speaker context resolution, date normalization, TF-IDF cosine duplicate filtering, and instant exports.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Recent Meetings Table -->
+<div class="card">
+  <div class="card-header">
+    <div class="card-title">
+      <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+      <span>Recent Meetings</span>
+    </div>
+    <a href="{{ url_for('main.history') }}" class="btn btn-outline btn-sm" id="view-all-history-btn">View All Meetings &rarr;</a>
+  </div>
+  <div class="card-body" style="padding: 0;">
+    {% if recent_meetings %}
+      <div class="table-responsive">
+        <table class="custom-table" id="recent-meetings-table">
+          <thead>
+            <tr>
+              <th>Meeting Title</th>
+              <th>Source</th>
+              <th>Date</th>
+              <th>Tasks</th>
+              <th>Progress</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for m in recent_meetings %}
+            {% set total = m.action_items|length %}
+            {% set completed = m.action_items|selectattr('status', 'equalto', 'Completed')|list|length %}
+            {% set pct = (completed / total * 100)|round|int if total > 0 else 0 %}
+            <tr>
+              <td>
+                <a href="{{ url_for('meetings.view_meeting', meeting_id=m.id) }}" style="font-weight: 600; color: #818cf8;">
+                  {{ m.title }}
+                </a>
+              </td>
+              <td>
+                <span style="font-size: 0.82rem; color: var(--text-secondary);">
+                  {{ m.file_name }} ({{ m.file_type }})
+                </span>
+              </td>
+              <td>
+                <span style="font-size: 0.85rem; color: var(--text-muted);">
+                  {{ m.meeting_date|format_date }}
+                </span>
+              </td>
+              <td>
+                <span class="badge" style="background: var(--bg-surface-hover); color: var(--text-main);">
+                  {{ total }} items
+                </span>
+              </td>
+              <td style="min-width: 140px;">
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                  <div class="progress-track" style="flex: 1;">
+                    <div class="progress-bar" style="width: {{ pct }}%;"></div>
+                  </div>
+                  <span style="font-size: 0.8rem; font-weight: 600; color: var(--text-secondary);">{{ pct }}%</span>
+                </div>
+              </td>
+              <td>
+                <div class="table-actions">
+                  <a href="{{ url_for('meetings.view_meeting', meeting_id=m.id) }}" class="btn btn-outline btn-sm" title="View Results Table">
+                    View
+                  </a>
+                  <div class="dropdown">
+                    <button type="button" class="btn btn-secondary btn-sm dropdown-toggle" title="Export">
+                      Export ▾
+                    </button>
+                    <div class="dropdown-menu">
+                      <a href="{{ url_for('meetings.export_meeting_csv', meeting_id=m.id) }}" class="dropdown-item">CSV</a>
+                      <a href="{{ url_for('meetings.export_meeting_json', meeting_id=m.id) }}" class="dropdown-item">JSON</a>
+                      <a href="{{ url_for('meetings.export_meeting_pdf', meeting_id=m.id) }}" class="dropdown-item">PDF Report</a>
+                    </div>
+                  </div>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div style="padding: 3rem; text-align: center; color: var(--text-muted);">
+        <p style="margin-bottom: 1rem;">No meetings processed yet.</p>
+        <a href="{{ url_for('meetings.load_sample_demo') }}" class="btn btn-primary btn-sm">Load Sample Demo Meeting</a>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

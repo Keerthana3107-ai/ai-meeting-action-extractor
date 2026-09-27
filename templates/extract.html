@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+
+{% block title %}Extract Action Items | {{ app_full_name }}{% endblock %}
+{% block header_title %}Action Item Extraction Studio{% endblock %}
+
+{% block content %}
+<div style="max-width: 960px; margin: 0 auto;">
+
+  <!-- Quick Demo Banner -->
+  <div style="background: linear-gradient(90deg, rgba(99, 102, 241, 0.15) 0%, rgba(168, 85, 247, 0.1) 100%); border: 1px solid rgba(99, 102, 241, 0.3); border-radius: var(--radius-lg); padding: 1.25rem 1.5rem; margin-bottom: 2rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+    <div>
+      <h3 style="font-size: 1rem; font-weight: 700; color: #c7d2fe; margin-bottom: 0.25rem;">Want to test immediately?</h3>
+      <p style="font-size: 0.85rem; color: var(--text-secondary); margin: 0;">Run dynamic NLP action-item extraction on our pre-packaged sprint planning transcript.</p>
+    </div>
+    <a href="{{ url_for('meetings.load_sample_demo') }}" class="btn btn-primary" id="btn-quick-sample-demo">
+      <span>✨</span>
+      <span>Load Sample Meeting Demo</span>
+    </a>
+  </div>
+
+  <form method="POST" action="{{ url_for('meetings.extract_action_items_route') }}" enctype="multipart/form-data" id="extract-form">
+    
+    <!-- Meeting Settings Card -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+          <span>Meeting Details & Extraction Preferences</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.25rem;">
+          <div class="form-group">
+            <label for="meeting-title-input" class="form-label">Meeting Title / Topic</label>
+            <input type="text" name="title" id="meeting-title-input" class="form-input" placeholder="e.g. Q4 Product Architecture & Sprint Sync" required>
+          </div>
+          <div class="form-group">
+            <label for="meeting-date-input" class="form-label">Meeting Date</label>
+            <input type="date" name="meeting_date" id="meeting-date-input" class="form-input" value="{{ today }}">
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 0;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
+            <label for="similarity-slider" class="form-label" style="margin: 0;">Duplicate Detection Sensitivity (TF-IDF Cosine Threshold)</label>
+            <span id="slider-val" style="font-size: 0.85rem; font-weight: 700; color: #818cf8;">0.75</span>
+          </div>
+          <input type="range" name="similarity_threshold" id="similarity-slider" min="0.50" max="0.95" step="0.05" value="0.75" style="width: 100%; accent-color: var(--accent-primary);" oninput="document.getElementById('slider-val').textContent = this.value">
+          <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">
+            <span>Stricter (Flag more similar items)</span>
+            <span>Default (0.75)</span>
+            <span>Lenient (Only flag near-exact tasks)</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Transcript Input Studio -->
+    <div class="card">
+      <div class="card-header">
+        <div class="tabs-nav" style="border-bottom: none; margin: 0; padding: 0;">
+          <button type="button" class="tab-btn active" data-tab="tab-upload" id="tab-btn-upload">
+            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+            <span>Upload Document</span>
+          </button>
+          <button type="button" class="tab-btn" data-tab="tab-paste" id="tab-btn-paste">
+            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            <span>Paste Transcript</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="card-body">
+        <!-- Tab 1: Upload Document -->
+        <div class="tab-content active" id="tab-upload">
+          <div class="dropzone-area" id="dropzone">
+            <input type="file" name="file" id="file-upload-input" accept=".txt,.pdf,.docx" style="display: none;">
+            <div class="dropzone-icon">
+              <svg width="32" height="32" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+            </div>
+            <div class="dropzone-text">
+              <h4>Drag & drop your transcript file here</h4>
+              <p>Supports <strong>.txt</strong>, <strong>.pdf</strong>, and <strong>.docx</strong> files (up to 16MB)</p>
+              <button type="button" class="btn btn-outline btn-sm" style="margin-top: 1rem;">
+                Browse Computer
+              </button>
+            </div>
+          </div>
+
+          <!-- File Selected Preview Card -->
+          <div class="file-preview-card" id="file-preview">
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+              <span style="font-size: 1.5rem;">📄</span>
+              <div>
+                <strong id="file-preview-name" style="font-size: 0.9rem; color: var(--text-main);">filename.docx</strong>
+                <div id="file-preview-size" style="font-size: 0.75rem; color: var(--text-muted);">1.2 MB</div>
+              </div>
+            </div>
+            <button type="button" class="btn btn-danger btn-sm" id="file-remove-btn" title="Remove file">
+              Remove
+            </button>
+          </div>
+        </div>
+
+        <!-- Tab 2: Paste Transcript -->
+        <div class="tab-content" id="tab-paste">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+            <span style="font-size: 0.85rem; color: var(--text-muted);">
+              Paste meeting dialogue or notes (Speaker: Content format supported):
+            </span>
+            <button type="button" class="btn btn-outline btn-sm" id="paste-sample-btn" style="font-size: 0.78rem;">
+              <span>📋</span> Insert Sample Text
+            </button>
+          </div>
+
+          <textarea name="transcript" id="transcript-textarea" class="form-textarea" placeholder="David (Product Lead): Arun will prepare the API documentation by Friday.&#10;Priya: Priya is responsible for the presentation deck. I'll finish it tomorrow.&#10;John: John needs to send the report by Monday."></textarea>
+          
+          <div class="char-counter">
+            <span id="char-count">0 characters</span>
+            <span id="line-count">0 lines</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Submit Action -->
+    <div style="display: flex; justify-content: flex-end; gap: 1rem; align-items: center; margin-top: 1.5rem;">
+      <a href="{{ url_for('main.dashboard') }}" class="btn btn-secondary">Cancel</a>
+      <button type="submit" class="btn btn-primary" id="btn-submit-extract" style="padding: 0.85rem 2rem; font-size: 0.95rem;">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+        <span>Extract Action Items</span>
+      </button>
+    </div>
+
+  </form>
+</div>
+{% endblock %}
